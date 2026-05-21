@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <title>BEL • Operational Management System</title>
+    
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bel-navy: #0e1150; 
+            --bel-gold: #c5a059;
+            --bel-bg-subtle: #f8fafc;
+            --bel-card-border: #e2e8f0;
+            --success: #198754;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --text-main: #1e293b;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Montserrat', sans-serif; 
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        header { 
+            background-color: var(--bel-navy);
+            color: white; 
+            padding: 2.5rem 1rem; 
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-bottom: 5px solid var(--bel-gold);
+        }
+
+        .logo-img {
+            height: 75px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+            transition: var(--transition);
+        }
+
+        header h1 { font-size: 1.3rem; letter-spacing: 3px; text-transform: uppercase; font-weight: 800; }
+        header .sub { font-size: 0.7rem; color: var(--bel-gold); letter-spacing: 5px; font-weight: 600; }
+
+        .container { max-width: 1000px; margin: -2.5rem auto 4rem; padding: 0 1.5rem; }
+
+        .card { 
+            background: white; 
+            border-radius: 8px; 
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); 
+            margin-bottom: 2rem; 
+            border: 1px solid var(--bel-card-border);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .section-title { 
+            font-size: 0.85rem; font-weight: 800; color: var(--bel-navy); 
+            text-transform: uppercase; margin-bottom: 1.5rem; display: flex; 
+            align-items: center; gap: 10px; border-bottom: 1px dashed var(--bel-card-border);
+            padding-bottom: 10px;
+        }
+
+        .form-grid { 
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; 
+            background: var(--bel-bg-subtle); padding: 1.5rem; border-radius: 6px;
+        }
+
+        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
+
+        label { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 5px; display: block; }
+        
+        input, select, textarea { 
+            width: 100%; padding: 0.8rem; border: 1px solid var(--bel-card-border); 
+            border-radius: 4px; font-size: 0.9rem; font-weight: 600;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        textarea {
+            resize: vertical;
+            font-family: inherit;
+            margin-top: 10px;
+        }
+
+        .item-card { 
+            background: white; border: 1px solid var(--bel-card-border);
+            border-radius: 6px; padding: 1.5rem; margin-bottom: 1.5rem;
+        }
+
+        .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .item-name { font-weight: 700; color: var(--bel-navy); }
+        .risk-badge { font-size: 0.6rem; padding: 4px 8px; border-radius: 4px; color: white; font-weight: 800; text-transform: uppercase; }
+        .risk-baixa { background: #6c757d; }
+        .risk-media { background: #fd7e14; }
+        .risk-alta { background: #dc3545; }
+
+        .btn-group { display: flex; gap: 10px; }
+        .radio-btn { flex: 1; }
+        .radio-btn input { display: none; }
+        
+        .radio-label {
+            display: block; padding: 1rem; text-align: center; 
+            border: 1px solid var(--bel-card-border); border-radius: 4px;
+            cursor: pointer; font-weight: 800; font-size: 0.75rem; 
+            transition: var(--transition);
+            background: #fff;
+            color: #64748b;
+        }
+
+        input[value="OK"]:checked + .radio-label { background: var(--success); color: white; border-color: var(--success); }
+        input[value="NOK"]:checked + .radio-label { background: var(--danger); color: white; border-color: var(--danger); }
+
+        .btn-save { 
+            background: var(--bel-navy); color: white; border: none; 
+            padding: 1.2rem; width: 100%; border-radius: 6px;
+            font-weight: 800; text-transform: uppercase; letter-spacing: 2px;
+            cursor: pointer; transition: var(--transition);
+        }
+
+        /* Alerta de Crítico */
+        #critical-alert {
+            display: none;
+            background: #fff5f5;
+            border: 2px solid var(--danger);
+            color: var(--danger);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th { background: var(--bel-bg-subtle); padding: 1rem; text-align: left; font-size: 0.7rem; text-transform: uppercase; border-bottom: 2px solid var(--bel-navy); }
+        td { padding: 1rem; border-bottom: 1px solid var(--bel-card-border); font-size: 0.85rem; }
+        
+        /* Estilo para a caixa de comentários */
+        .comment-box {
+            display: none;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-container">
+        <img src="https://www.bel.ind.br/wp-content/uploads/2022/07/01_LogoBel-Azul-1.png" class="logo-img" alt="BEL Logo">
+        <h1>BEL Import & Export</h1>
+        <div class="sub">OPERATIONAL MANAGEMENT SYSTEM</div>
+    </div>
+</header>
+
+<div class="container">
+    <div class="card">
+        <div class="section-title"><i class="fas fa-id-card"></i> Identificação do Operador</div>
+        <div class="form-grid">
+            <div class="field">
+                <label>Matrícula</label>
+                <input type="number" id="matricula" placeholder="Digite seu ID">
+            </div>
+            <div class="field">
+                <label>Equipamento</label>
+                <select id="maquina" onchange="gerarChecklist()">
+                    <option value="">Selecione...</option>
+                    <option value="CURVADORA">Curvadora Industrial</option>
+                    <option value="MUP">Unidade MUP</option>
+                    <option value="TRANSFER">Transfer Automático</option>
+                    <option value="PRENSA 45">Prensa de Precisão 45</option>
+                    <option value="CNC SERRA">CNC Serra de Corte</option>
+                    <option value="PRENSA / FURAÇÃO">Prensa de Furação</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Turno</label>
+                <select id="turno"><option>A</option><option>B</option><option>C</option></select>
+            </div>
+        </div>
+    </div>
+
+    <div id="container-checklist" style="display:none">
+        <div id="critical-alert">
+            <i class="fas fa-exclamation-triangle fa-2x"></i><br><br>
+            <span id="alert-msg"></span>
+        </div>
+        
+        <div class="card">
+            <div class="section-title"><i class="fas fa-check-double"></i> Checklist Técnico</div>
+            <div id="lista-perguntas"></div>
+            <button class="btn-save" id="btn-finalizar" onclick="salvarNoBanco()">Gravar Registro</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title"><i class="fas fa-history"></i> Últimos Registros</div>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr><th>Data/Hora</th><th>Ativo</th><th>Operador</th><th>Risco</th></tr>
+                </thead>
+                <tbody id="corpo-tabela"></tbody>
+            </table>
+        </div>
+        <button class="btn-save" style="background:var(--success); margin-top:20px; font-size: 0.7rem; padding: 0.8rem;" onclick="exportarXLSX()">
+            <i class="fas fa-file-excel"></i> Exportar Dados
+        </button>
+    </div>
+</div>
+
+<script>
+    const mapeamento = {
+        'CURVADORA': [
+            { item: 'Lubrificação Central', risco: 1 },
+            { item: 'Pressão Hidráulica', risco: 2 },
+            { item: 'Integridade Elétrica', risco: 3 }
+        ],
+        'MUP': [
+            { item: 'Vedações Pneumáticas', risco: 1 },
+            { item: 'Curso dos Pistões', risco: 2 },
+            { item: 'Ação das Válvulas', risco: 3 }
+        ],
+        'TRANSFER': [
+            { item: 'Sensores de Presença', risco: 3 },
+            { item: 'Cabeamento de Dados', risco: 1 },
+            { item: 'Estado das Matrizes', risco: 2 }
+        ],
+        'PRENSA 45': [
+            { item: 'Válvulas de Segurança', risco: 3 },
+            { item: 'Nível de Óleo', risco: 1 },
+            { item: 'Comando Bimanual', risco: 3 }
+        ],
+        'CNC SERRA': [
+            { item: 'Refrigeração de Corte', risco: 1 },
+            { item: 'Precisão de Medida', risco: 2 },
+            { item: 'Ruídos de Motor', risco: 2 }
+        ],
+        'PRENSA / FURAÇÃO': [
+            { item: 'Alinhamento de Brocas', risco: 2 },
+            { item: 'Fixação de Peças', risco: 3 },
+            { item: 'Circuito Elétrico', risco: 3 }
+        ]
+    };
+
+    function getRiskClass(level) {
+        if(level === 1) return 'risk-baixa';
+        if(level === 2) return 'risk-media';
+        return 'risk-alta';
+    }
+
+    function getRiskName(level) {
+        if(level === 1) return 'Baixa';
+        if(level === 2) return 'Média';
+        return 'Alta';
+    }
+
+    function gerarChecklist() {
+        const maq = document.getElementById('maquina').value;
+        const container = document.getElementById('container-checklist');
+        const lista = document.getElementById('lista-perguntas');
+        
+        if(!maq) { container.style.display = 'none'; return; }
+        
+        container.style.display = 'block';
+        document.getElementById('critical-alert').style.display = 'none';
+        
+        lista.innerHTML = mapeamento[maq].map((obj, i) => `
+            <div class="item-card">
+                <div class="item-header">
+                    <span class="item-name">${obj.item}</span>
+                    <span class="risk-badge ${getRiskClass(obj.risco)}">Risco ${getRiskName(obj.risco)}</span>
+                </div>
+                <div class="btn-group">
+                    <div class="radio-btn">
+                        <input type="radio" name="p${i}" id="ok${i}" value="OK" checked onclick="validarRiscos(${i})">
+                        <label class="radio-label" for="ok${i}"><i class="fas fa-check"></i> OK</label>
+                    </div>
+                    <div class="radio-btn">
+                        <input type="radio" name="p${i}" id="nok${i}" value="NOK" onclick="validarRiscos(${i})">
+                        <label class="radio-label" for="nok${i}"><i class="fas fa-times"></i> NOK</label>
+                    </div>
+                </div>
+                <div class="comment-box" id="box-comentario-${i}">
+                    <label style="margin-top: 10px;">Descreva a não conformidade (Obrigatório):</label>
+                    <textarea id="comentario-${i}" rows="2" placeholder="Descreva o motivo do NOK..."></textarea>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function validarRiscos(indexModificado) {
+        const maq = document.getElementById('maquina').value;
+        const itens = mapeamento[maq];
+        const alertBox = document.getElementById('critical-alert');
+        const alertMsg = document.getElementById('alert-msg');
+        const btnSave = document.getElementById('btn-finalizar');
+        
+        if(indexModificado !== undefined) {
+            const isNokAtual = document.getElementById(`nok${indexModificado}`).checked;
+            const boxComentario = document.getElementById(`box-comentario-${indexModificado}`);
+            if(isNokAtual) {
+                boxComentario.style.display = 'block';
+            } else {
+                boxComentario.style.display = 'none';
+                document.getElementById(`comentario-${indexModificado}`).value = '';
+            }
+        }
+
+        let riscoMaximoEncontrado = 0;
+
+        itens.forEach((obj, i) => {
+            const isNok = document.getElementById(`nok${i}`).checked;
+            if(isNok) {
+                riscoMaximoEncontrado = Math.max(riscoMaximoEncontrado, obj.risco);
+            }
+        });
+
+        // O botão 'btnSave' agora NUNCA fica disabled=true, permitindo salvar o relatório
+        btnSave.disabled = false;
+        btnSave.style.opacity = "1";
+
+        if(riscoMaximoEncontrado === 1) {
+            alertBox.style.display = 'block';
+            alertBox.style.borderColor = 'var(--warning)';
+            alertBox.style.color = '#856404';
+            alertBox.style.background = '#fff3cd';
+            alertMsg.innerHTML = "<b>ATENÇÃO:</b> Risco Baixo detectado. Sinalize o supervisor e realize o ajuste antes de iniciar.";
+        } else if(riscoMaximoEncontrado >= 2) {
+            alertBox.style.display = 'block';
+            alertBox.style.borderColor = 'var(--danger)';
+            alertBox.style.color = 'var(--danger)';
+            alertBox.style.background = '#fff5f5';
+            alertMsg.innerHTML = "<b>BLOQUEIO DE SEGURANÇA:</b> Risco Médio/Alto detectado. Sinalize o responsável, insira o comentário e grave o registro.";
+        } else {
+            alertBox.style.display = 'none';
+        }
+    }
+
+    function salvarNoBanco() {
+        const mat = document.getElementById('matricula').value;
+        const maq = document.getElementById('maquina').value;
+        if(!mat || !maq) return alert("Por favor, identifique-se!");
+        
+        const db = JSON.parse(localStorage.getItem('bel_db_v4') || '[]');
+        
+        let statusGeral = "OPERACIONAL";
+        let riscoGeral = "NENHUM";
+        let justificativas = [];
+        let impedimentoPorComentario = false;
+        
+        mapeamento[maq].forEach((obj, i) => {
+            if(document.getElementById(`nok${i}`).checked) {
+                statusGeral = "MANUTENÇÃO";
+                riscoGeral = getRiskName(obj.risco);
+                
+                const txtComentario = document.getElementById(`comentario-${i}`).value.trim();
+                if(!txtComentario) {
+                    impedimentoPorComentario = true;
+                } else {
+                    justificativas.push(`${obj.item}: ${txtComentario}`);
+                }
+            }
+        });
+
+        if(impedimentoPorComentario) {
+            return alert("Por favor, preencha o campo de comentário explicando as falhas encontradas nos itens com NOK.");
+        }
+
+        db.push({
+            'Data': new Date().toLocaleString('pt-BR'),
+            'Ativo': maq,
+            'Operador': mat,
+            'Status': statusGeral,
+            'Risco': riscoGeral,
+            'Detalhes': justificativas.length > 0 ? justificativas.join(' | ') : 'Nenhuma não conformidade'
+        });
+
+        localStorage.setItem('bel_db_v4', JSON.stringify(db));
+        alert("Registro técnico salvo com sucesso!");
+        location.reload();
+    }
+
+    function carregarTabela() {
+        const dados = JSON.parse(localStorage.getItem('bel_db_v4') || '[]');
+        document.getElementById('corpo-tabela').innerHTML = dados.reverse().slice(0, 5).map(l => `
+            <tr>
+                <td>${l.Data}</td>
+                <td><b>${l.Ativo}</b></td>
+                <td>${l.Operador}</td>
+                <td><span class="risk-badge ${l.Status === 'MANUTENÇÃO' ? 'risk-alta' : 'risk-baixa'}" style="background:${l.Status === 'MANUTENÇÃO' ? '#dc3545' : '#198754'}">${l.Risco}</span></td>
+            </tr>
+        `).join('');
+    }
+
+    function exportarXLSX() {
+        const dados = JSON.parse(localStorage.getItem('bel_db_v4') || '[]');
+        if(dados.length === 0) return alert("Nada para exportar!");
+        const ws = XLSX.utils.json_to_sheet(dados);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Logs");
+        XLSX.writeFile(wb, "Relatorio_FMEA_BEL.xlsx");
+    }
+
+    window.onload = carregarTabela;
+</script>
+</body>
+</html>
